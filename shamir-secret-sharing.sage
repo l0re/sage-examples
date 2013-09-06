@@ -80,20 +80,29 @@ print('Reconstructed LG:', [i.int_repr() for i in coeffs])
 points[0][1] = 1
 
 # reconstruct with berlekamp-welch
+t = floor((self._n - self._k) / 2.)
+deg_E = t
+deg_Q = len(points) - deg_E - 1
+
+# generate system of linear equations
 A = []
 b = []
 for point in points:
     xp = point[0]
     yp = point[1]
-    A.append([1, xp, xp^2, xp^3, -yp])
-    b.append(yp*xp)
+    syseq = [xp**i for i in range(deg_Q+1)]
+    syseq.extend([-yp*xp**i for i in range(deg_E)])
+    A.append(syseq)
+    b.append(yp*xp**deg_E)
 
-A = Matrix(A[:5])
-b = vector(b[:5])
+A = Matrix(A)
+b = vector(b)
 
+# solve and extract secret
 QE = A.solve_right(b)
-Q = sum([c * x^i for i,c in enumerate(QE[:4])]); 
-E = x + QE[-1]
+Q = sum([c * self._x**i for i,c in enumerate(QE[:deg_Q+1])]);
+E = self._x**deg_E
+E += sum([c * self._x**i for i,c in enumerate(QE[deg_Q+1:])]);
 P = Q.quo_rem(E)[0]
 
 print('BW Polynomial', P)
