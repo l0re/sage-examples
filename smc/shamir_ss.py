@@ -51,7 +51,7 @@ class ShamirSS(SageObject):
     Generate shares::
 
         sage: k = 3; n = 7
-        sage: sss = ShamirSS(k,n)
+        sage: sss = ShamirSS(n,k)
         sage: secret = 42
         sage: shares = sss.share(secret)
 
@@ -92,9 +92,9 @@ class ShamirSS(SageObject):
     REFERENCES:
 
     .. [Shamir1979] Shamir, A. (1979). How to share a secret. 
-       Communications of the ACM, 22(11), 612–613. doi:10.1145/359168.359176
+       Communications of the ACM, 22(11), 612–613. :doi:`10.1145/359168.359176`
     """
-    def __init__(self, k=3, n=7):
+    def __init__(self, n=7, k=3):
         r"""
         Sharmir secret sharing.
 
@@ -107,7 +107,7 @@ class ShamirSS(SageObject):
 
             sage: from sage.crypto.smc.shamir_ss import ShamirSS
             sage: k = 3; n = 7
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: recsec = sss.reconstruct(shares)
@@ -146,7 +146,7 @@ class ShamirSS(SageObject):
         
             sage: from sage.crypto.smc.shamir_ss import ShamirSS
             sage: k = 3; n = 7
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: sss._to_GF(42)
             a^5 + a^3 + a
             sage: sss._to_GF(255)
@@ -156,9 +156,9 @@ class ShamirSS(SageObject):
         try:
             x = Integer(x)
         except TypeError:
-            raise TypeError, "value is not an integer."
+            raise TypeError("value is not an integer.")
         if x >= self._q**self._m:
-            raise ValueError, "integer representation not in field."
+            raise ValueError("integer representation not in field.")
         poly = 0
         coeff = list(bin(x)[2:])
         coeff.reverse()
@@ -194,7 +194,7 @@ class ShamirSS(SageObject):
         Decoding without errors::
 
             sage: k = 3; n = 7
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: recsec = sss.reconstruct(shares)
@@ -204,7 +204,7 @@ class ShamirSS(SageObject):
         Decoding with errors::
 
             sage: k = 3; n = 7
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
@@ -213,7 +213,7 @@ class ShamirSS(SageObject):
             True
 
             sage: k = 4; n = 10
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = 84
             sage: shares = sss.share(secret)
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
@@ -264,7 +264,7 @@ class ShamirSS(SageObject):
         Erasure decoding::
 
             sage: k = 3; n = 7
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: recsec = sss.reconstruct(shares)
@@ -272,7 +272,7 @@ class ShamirSS(SageObject):
             True
 
             sage: k = 4; n = 10
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: recsec = sss.reconstruct(shares)
@@ -321,7 +321,7 @@ class ShamirSS(SageObject):
         Simple interface::
 
             sage: k = 3; n = 7
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: [i+1 == share[0]  for i, share in enumerate(shares)]
@@ -362,7 +362,7 @@ class ShamirSS(SageObject):
         Simple interface::
 
             sage: k = 3; n = 7
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: recsec = sss.reconstruct(shares)
@@ -377,7 +377,7 @@ class ShamirSS(SageObject):
             True
 
             sage: k = 4; n = 10
-            sage: sss = ShamirSS(k,n)
+            sage: sss = ShamirSS(n,k)
             sage: secret = randint(0, 255)
             sage: shares = sss.share(secret)
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
@@ -398,7 +398,7 @@ class ShamirSS(SageObject):
         elif decoder == 'bw':
             return self._rec_berlekamp_welch(points)
         else:
-            raise ValueError, "unknown decoder."
+            raise ValueError("unknown decoder.")
 
 
 # vim: set fileencoding=UTF-8 filetype=python :
