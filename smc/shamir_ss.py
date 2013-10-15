@@ -175,8 +175,11 @@ class ShamirSS(SageObject):
         self._order = order  # order of field
 
         from sage.rings.finite_rings.constructor import FiniteField
-        from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
         self._F = FiniteField(self._order, 'a')
+        if not self._F.is_prime_field() and not hasattr(self._F, 'fetch_int'):
+            raise TypeError("field order not supported")
+
+        from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
         self._R = PolynomialRing(self._F, 'x')
 
     ### begin module private api
@@ -232,7 +235,7 @@ class ShamirSS(SageObject):
             a^7 + a^6 + a^5 + a^4 + a^3 + a^2 + a + 1
         """
         # input checking
-        if x >= self._F.order():
+        if x > self._F.order():
             raise TypeError("secret must be within 0 and field order.")
 
         # convert to field type
@@ -306,9 +309,7 @@ class ShamirSS(SageObject):
         # generate system of linear equations
         A = []
         b = []
-        for point in points:
-            x = point[0]
-            y = point[1]
+        for x, y in points:
             syseq = [x**i for i in range(deg_Q+1)]
             syseq.extend([-y*x**i for i in range(deg_E)])
             A.append(syseq)
@@ -377,9 +378,9 @@ class ShamirSS(SageObject):
             sage: from sage.crypto.smc.shamir_ss import ShamirSS
             sage: sss=ShamirSS()
             sage: print(sss)
-            (3,7)-Shamir secret sharing over Finite Field in a of size 2^8
+            (7,3)-Shamir secret sharing over Finite Field in a of size 2^8
         """
-        return "({},{})-Shamir secret sharing over {}".format(self._k, self._n, 
+        return "({},{})-Shamir secret sharing over {}".format(self._n, self._k, 
                                                               self._F)
 
     ### begin public api
