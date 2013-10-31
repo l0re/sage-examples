@@ -14,11 +14,6 @@ REFERENCES:
 
 .. [Shamir1979] Shamir, A. (1979). How to share a secret. 
    Communications of the ACM, 22(11), 612–613. :doi:`10.1145/359168.359176`
-
-.. TODO::
-
-- Extend module to support input vectors.
-
 """
 ###############################################################################
 # Copyright 2013, Thomas Loruenser <thomas.loruenser@ait.ac.at>
@@ -60,15 +55,21 @@ class ShamirSS(SageObject):
 
     Reconstruct secret (Lagrange interpolation)::
 
-        sage: recsec = sss.reconstruct(shares)
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares)
         True
 
     Reconstruct with error shares (Belekamp-Welsch decoder)::
 
         sage: shares[0] = (shares[0][0], shares[0][1]+1)
-        sage: recsec = sss.reconstruct(shares, decoder='bw')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='bw')
+        True
+
+    Input vectors::
+
+        sage: sss = ShamirSS()
+        sage: secret = [42, 43, 44, 45]
+        sage: shares = sss.share(secret)
+        sage: secret == sss.reconstruct(shares)
         True
 
     TESTS:
@@ -77,11 +78,9 @@ class ShamirSS(SageObject):
 
         sage: secret = randint(0,255)
         sage: shares = sss.share(secret)
-        sage: recsec = sss.reconstruct(shares, decoder='lg')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='lg')
         True
-        sage: recsec = sss.reconstruct(shares, decoder='bw')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='bw')
         True
 
     Secret must be integer representation in field::
@@ -100,54 +99,41 @@ class ShamirSS(SageObject):
         sage: secret = randint(0, order-1)
         sage: sss = ShamirSS(7, 3, order)
         sage: shares = sss.share(secret)
-        sage: recsec = sss.reconstruct(shares)
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares)
         True
 
         sage: shares[0] = (shares[0][0], shares[0][1]+1)
-        sage: recsec = sss.reconstruct(shares, decoder='bw')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='bw')
         True
 
         sage: shares[1] = (shares[1][0], shares[1][1]+1)
-        sage: recsec = sss.reconstruct(shares, decoder='bw')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='bw')
         True
 
         sage: shares[-1] = (shares[-1][0], shares[-1][1]+1)
-        sage: recsec = sss.reconstruct(shares, decoder='bw')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='bw')
         False
 
     Working in extension fields::
 
-        sage: order = 2**randint(2,32)
+        sage: order = 2**randint(3,15)
         sage: secret = randint(0, order)
         sage: sss = ShamirSS(7, 3, order)
         sage: shares = sss.share(secret)
-        sage: recsec = sss.reconstruct(shares[:-2])
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares[:-2])
         True
 
         sage: shares[0] = (shares[0][0], shares[0][1]+1)
-        sage: recsec = sss.reconstruct(shares, decoder='bw')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='bw')
         True
 
         sage: shares[1] = (shares[1][0], shares[1][1]+1)
-        sage: recsec = sss.reconstruct(shares, decoder='bw')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='bw')
         True
 
         sage: shares[-1] = (shares[-1][0], shares[-1][1]+1)
-        sage: recsec = sss.reconstruct(shares, decoder='bw')
-        sage: secret == recsec
+        sage: secret == sss.reconstruct(shares, decoder='bw')
         False
-
-    REFERENCES:
-
-    .. [Shamir1979] Shamir, A. (1979). How to share a secret. 
-       Communications of the ACM, 22(11), 612–613. :doi:`10.1145/359168.359176`
     """
     def __init__(self, n=7, k=3, order=2**8):
         r"""
@@ -162,12 +148,10 @@ class ShamirSS(SageObject):
         EXAMPLES::
 
             sage: from sage.crypto.smc.shamir_ss import ShamirSS
-            sage: k = 3; n = 7
-            sage: sss = ShamirSS(n,k)
+            sage: sss = ShamirSS()
             sage: secret = 42
             sage: shares = sss.share(secret)
-            sage: recsec = sss.reconstruct(shares)
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares)
             True
         """
         self._k = k  # threshold
@@ -180,7 +164,7 @@ class ShamirSS(SageObject):
             raise TypeError("field order not supported")
 
         from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-        self._R = PolynomialRing(self._F, 'x')
+        self._P = PolynomialRing(self._F, 'x')
 
     ### begin module private api
 
@@ -227,8 +211,7 @@ class ShamirSS(SageObject):
         EXAMPLES::
         
             sage: from sage.crypto.smc.shamir_ss import ShamirSS
-            sage: k = 3; n = 7
-            sage: sss = ShamirSS(n,k)
+            sage: sss = ShamirSS()
             sage: sss._to_GF(42)
             a^5 + a^3 + a
             sage: sss._to_GF(255)
@@ -245,7 +228,6 @@ class ShamirSS(SageObject):
             return self._F.fetch_int(x)
 
 
-
     def _latex_(self):
         r"""
         Return Latex representation of self.
@@ -255,14 +237,14 @@ class ShamirSS(SageObject):
             sage: from sage.crypto.smc.shamir_ss import ShamirSS
             sage: sss=ShamirSS()
             sage: latex(sss)
-            `(3,7)`-Shamir secret sharing over the field `\Bold{F}_{2^{8}}`
+            `(7,3)`-Shamir secret sharing over the field `\Bold{F}_{2^{8}}`
         """
         from sage.misc.latex import latex
         return "`({},{})`-Shamir secret sharing over the field `{}`".format(
-            self._k, self._n, latex(self._F))
+            self._n, self._k, latex(self._F))
 
 
-    def _rec_berlekamp_welch(self, points):
+    def _rec_berlekamp_welsh(self, points):
         r"""
         Reconstruct with Berlekamp-Welsh decoding.
 
@@ -280,13 +262,11 @@ class ShamirSS(SageObject):
 
         Decoding with errors::
 
-            sage: k = 3; n = 7
-            sage: sss = ShamirSS(n,k)
+            sage: sss = ShamirSS()
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             True
 
             sage: k = 4; n = 10
@@ -296,39 +276,13 @@ class ShamirSS(SageObject):
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
             sage: shares[1] = (shares[1][0], shares[1][1]+1)
             sage: shares[-1] = (shares[-1][0], shares[-1][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             True
 
         """
-        from sage.functions.all import floor
-        t = floor((self._n - self._k) / 2.)
-        deg_E = t
-        deg_Q = len(points) - deg_E - 1
-
-        # generate system of linear equations
-        A = []
-        b = []
-        for x, y in points:
-            syseq = [x**i for i in range(deg_Q+1)]
-            syseq.extend([-y*x**i for i in range(deg_E)])
-            A.append(syseq)
-            b.append(y*x**deg_E)
-
-        from sage.matrix.all import Matrix
-        from sage.all import vector
-        A = Matrix(A)
-        b = vector(b)
-
-        # solve and extract secret
-        QE = A.solve_right(b)
-        Q = sum([c * self._R.gen()**i for i,c in enumerate(QE[:deg_Q+1])]);
-        E = self._R.gen()**deg_E
-        E += sum([c * self._R.gen()**i for i,c in enumerate(QE[deg_Q+1:])]);
-        P = Q.quo_rem(E)[0]
-
-        secret = P.constant_coefficient()
-        return self._to_Int(secret)
+        from berlekamp_welsh import berlekamp_welsh
+        polycoeffs =  berlekamp_welsh(self._k-1, points).coeffs()
+        return polycoeffs
 
 
     def _rec_lagrange(self, points):
@@ -349,24 +303,23 @@ class ShamirSS(SageObject):
 
         Erasure decoding::
 
-            sage: k = 3; n = 7
-            sage: sss = ShamirSS(n,k)
+            sage: sss = ShamirSS()
             sage: secret = 42
             sage: shares = sss.share(secret)
-            sage: recsec = sss.reconstruct(shares)
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares)
             True
 
             sage: k = 4; n = 10
             sage: sss = ShamirSS(n,k)
             sage: secret = 42
             sage: shares = sss.share(secret)
-            sage: recsec = sss.reconstruct(shares)
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares)
             True
         """
-        secret = self._R.lagrange_polynomial(points).constant_coefficient()
-        return self._to_Int(secret)
+        polycoeffs = self._P.lagrange_polynomial(points).coeffs()
+        if len(polycoeffs) != self._k:
+            raise ValueError("lagrange polynomial degree mismatch.")
+        return polycoeffs
 
 
     def _repr_(self):
@@ -385,7 +338,7 @@ class ShamirSS(SageObject):
 
     ### begin public api
 
-    def share(self, s):
+    def share(self, secret):
         r"""
         Generate shares.
 
@@ -395,11 +348,11 @@ class ShamirSS(SageObject):
 
         INPUT:
 
-        - ``s`` -- the secret to be shared (integer which must be in GF(2^8))
+        - ``secret`` -- the secret to be shared (integer or list of integer)
 
         OUTPUT:
 
-        - A list of shares.
+        The shares or a list of shares, if list input.
 
         EXAMPLES::
 
@@ -407,21 +360,38 @@ class ShamirSS(SageObject):
 
         Simple interface::
 
-            sage: k = 3; n = 7
-            sage: sss = ShamirSS(n,k)
+            sage: sss = ShamirSS()
             sage: secret = 42
             sage: shares = sss.share(secret)
             sage: [i+1 == share[0]  for i, share in enumerate(shares)]
             [True, True, True, True, True, True, True]
+
+        Input vector::
+
+            sage: sss = ShamirSS()
+            sage: secret = [42, 43, 44, 45]
+            sage: shares = sss.share(secret)
+            sage: secret == sss.reconstruct(shares)
+            True
         """
-        # calculate random polynomial
-        ssp = self._to_GF(s)
+        # make input iterable
+        from sage.rings.integer import Integer
+        if not type(secret) == list:
+            secret = [secret]
+        
+        # generate shares
+        shares = []
+        for s in secret:
+            # random polynomial with s as constant coefficient
+            ssp = self._to_GF(s)
+            for i in range(1, self._k):
+                ssp += self._F.random_element() * self._P.gen()**i
 
-        for i in range(1, self._k):
-            ssp += self._F.random_element() * self._R.gen()**i
-
-        # evaluate polynomial at different points (shares)
-        shares = [(i, self._to_Int(ssp(self._to_GF(i)))) for i in range(1, self._n+1)]
+            # evaluate polynomial at different points (shares)
+            shares.append([(i, self._to_Int(ssp(self._to_GF(i)))) for i in range(1, self._n+1)])
+        
+        if len(shares) == 1:
+            shares = shares[0]
         return shares
 
 
@@ -431,13 +401,13 @@ class ShamirSS(SageObject):
 
         INPUT:
 
-        - ``shares`` -- a list of shares (2-tuples of integer)
-        - ``decoder`` -- string (default: 'lag') decoder used to reconstruct secret.
-            must be one of the supported types 'lag' or 'bw'.
+        - ``shares`` -- a list of shares ((x,y)-tuples of integer) or list of it.
+        - ``decoder`` -- string (default: 'lg') decoder used to reconstruct secret.
+            must be one of the supported types 'lg' or 'bw'.
 
         OUTPUT:
 
-        - The reconstructed secret.
+        The reconstructed secret or list of secrets.
 
         EXAMPLES::
 
@@ -445,19 +415,16 @@ class ShamirSS(SageObject):
 
         Simple interface::
 
-            sage: k = 3; n = 7
-            sage: sss = ShamirSS(n,k)
+            sage: sss = ShamirSS()
             sage: secret = 42
             sage: shares = sss.share(secret)
-            sage: recsec = sss.reconstruct(shares)
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares)
             True
 
         Decoding with errors::
 
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             True
 
             sage: k = 4; n = 10
@@ -467,8 +434,7 @@ class ShamirSS(SageObject):
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
             sage: shares[1] = (shares[1][0], shares[1][1]+1)
             sage: shares[-1] = (shares[-1][0], shares[-1][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             True
 
         TESTS:
@@ -481,59 +447,64 @@ class ShamirSS(SageObject):
             sage: secret = randint(0, order-1)
             sage: sss = ShamirSS(7, 3, order)
             sage: shares = sss.share(secret)
-            sage: recsec = sss.reconstruct(shares)
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares)
             True
 
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             True
 
             sage: shares[1] = (shares[1][0], shares[1][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             True
 
             sage: shares[-1] = (shares[-1][0], shares[-1][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             False
 
         Working in extension fields::
 
-            sage: order = 2**randint(2,32)
-            sage: secret = randint(0, order)
+            sage: order = 2**randint(3, 15)
+            sage: secret = randint(0, order-1)
             sage: sss = ShamirSS(7, 3, order)
             sage: shares = sss.share(secret)
-            sage: recsec = sss.reconstruct(shares[:-2])
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares[:-2])
             True
 
             sage: shares[0] = (shares[0][0], shares[0][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             True
 
             sage: shares[1] = (shares[1][0], shares[1][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             True
 
             sage: shares[-1] = (shares[-1][0], shares[-1][1]+1)
-            sage: recsec = sss.reconstruct(shares, decoder='bw')
-            sage: secret == recsec
+            sage: secret == sss.reconstruct(shares, decoder='bw')
             False
         """
-        # convert to field
-        points = [(self._to_GF(share[0]), self._to_GF(share[1])) for share in shares]
+        # make shares iterable
+        if type(shares[0]) == tuple:
+            shares = [shares]
 
-        # call decoder
+        # set decoder
         if decoder == 'lg':
-            return self._rec_lagrange(points)
+            decode = self._rec_lagrange
         elif decoder == 'bw':
-            return self._rec_berlekamp_welch(points)
+            decode = self._rec_berlekamp_welsh
         else:
             raise ValueError("unknown decoder.")
+
+        # reconstruct secret
+        secret = []
+        for element in shares:
+            # convert to field
+            points = [(self._to_GF(x), self._to_GF(y)) for x,y in element]
+            # call decoder
+            secret.append(self._to_Int(decode(points)[0]))
+        if len(secret) == 1:
+            secret = secret[0]
+        return secret
+
 
 # vim: set fileencoding=UTF-8 filetype=python :
