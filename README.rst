@@ -1,7 +1,14 @@
 sage-examples
 =============
 
-This repository just contains some sample scripts 
-for sagemath from the two related domains of 
-coding theory and cryptography. Don't expect too 
-much, but maybe it helps you getting into the topic.
+This repository conatins some sample scripts of cryptographic primitives 
+used in the *Archistar* project. The code is intended to be run in
+the `sagemath <http://www.sagemath.org>`_ framework.
+
+The scripts are from the domains of:
+
+* Coding theory
+* Secure multiparty computation
+* Cloud cryptography
+
+
