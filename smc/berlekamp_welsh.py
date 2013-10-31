@@ -1,8 +1,10 @@
 # coding: UTF-8
 r"""
-Berlekamp-Welsh algorithm for reconstructing polynomials with erroneous points
+Berlekamp-Welsh algorithm
 
-The algorithm is well explained on 
+The Berlekamp-Welsh algorithm serves for the purpose of reconstructing 
+polynomials with erroneous points.
+The algorithm is well explained at
 `Wikipedia <https://en.wikipedia.org/wiki/Berlekamp–Welch_algorithm>`_.
 
 AUTHORS:
@@ -32,16 +34,16 @@ from sage.structure.sage_object import SageObject
 
 def berlekamp_welsh(deg, points):
     r"""
-    Reconstruct polynomial with Berlekamp-Welsh decoding.
+    Reconstruct polynomial with Berlekamp-Welsh algorithm.
 
     INPUT:
 
-    - ``deg``    --  degree of polynomial to reconstruct 
-    - ``points`` --  array of points (x,y)-tuples of 
+    - ``deg``    --  degree of polynomial to reconstruct.
+    - ``points`` --  array of points (list of (x,y)-tuples).
 
     OUTPUT:
 
-    Reconstructed polynomial
+    Reconstructed polynomial.
 
     EXAMPLES::
 
@@ -101,3 +103,4 @@ def berlekamp_welsh(deg, points):
     P = Q.quo_rem(E)[0]
     return P
 
+# vim: set fileencoding=UTF-8 filetype=python :
