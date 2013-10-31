@@ -4,8 +4,8 @@ Rabin information dispersal
 
 Implements the Rabin information dispersal [Rabin1989]_ protocol
 originally intended for secure distributed data storage. From
-a cryptographic standpoint it is clear that it cannot be secure,
-however, the idea inspired many new protocols [Krawczyk1994]_. 
+a cryptographic standpoint it is clear, that it cannot be secure,
+however, the idea inspired many new protocols. 
 The protocol relies on the idea of Reed-Solomon codes as well as
 to Shamir secret sharing [Shamir1979]_.
 
@@ -15,15 +15,9 @@ AUTHORS:
 
 REFERENCES:
 
-.. [Shamir1979] Shamir, A. (1979). How to share a secret. 
-   Communications of the ACM, 22(11), 612–613. :doi:`10.1145/359168.359176`
-
 .. [Rabin1989] Rabin, M. O. (1989). Efficient dispersal of information for security, 
    load balancing, and fault tolerance. Journal of the ACM, 36(2), 335–348. 
    :doi:`10.1145/62044.62050`
-
-.. [Krawczyk1994] Krawczyk, H. (1994). Secret sharing made short. (D. R. Stinson, Ed.)
-   Advances in Cryptology - CRYPTO´ 93, 773, 136–146. :doi:`10.1007/3-540-48329-2_12`
 """
 ###############################################################################
 # Copyright 2013, Thomas Loruenser <thomas.loruenser@ait.ac.at>
@@ -69,49 +63,38 @@ class RabinIDS(ShamirSS):
             True
     """
 
-    ### begin public api
+    ### begin module private api
 
-    def share(self, secret):
+    def _latex_(self):
         r"""
-        Generate shares.
-
-        A polynomial of degree `k-1` is generated from input data.
-        It is then evaluated at points starting from `1`.
-
-        INPUT:
-
-        - ``secret`` -- the data to be shared (list of integer)
-
-        OUTPUT:
-
-        The shares.
+        Return Latex representation of self.
 
         EXAMPLES::
 
             sage: from sage.crypto.smc.rabin_ids import RabinIDS
-
-            sage: n, k, order = 7, 3, 2**8
-            sage: data = [i for i in range(15)]
-            sage: ids = RabinIDS(n, k, order)
-            sage: shares = ids.share(data)
-            sage: data == ids.reconstruct(shares)
-            True
+            sage: ids = RabinIDS()
+            sage: latex(ids)
+            `(7,3)`-Rabin information dispersal over the field `\Bold{F}_{2^{8}}`
         """
-        # check input list size (padding is not supported)
-        if len(secret)%self._k:
-            raise TypeError("input list must be multiple of k (padding is not supported).")
-        
-        # generate shares
-        shares = []
-        for i in range(len(secret)/self._k):
-            poly = 0
-            for j in range(self._k):
-                # gen polynomial form data
-                poly += self._to_GF(secret[i*self._k + j]) * self._P.gen()**j
-            # evaluate polynomial at different points (shares)
-            shares.append([(i, self._to_Int(poly(self._to_GF(i)))) for i in range(1, self._n+1)])
-        return shares
+        from sage.misc.latex import latex
+        return "`({},{})`-Rabin information dispersal over the field `{}`".format(
+            self._n, self._k, latex(self._F))
 
+
+    def _repr_(self):
+        r"""
+        Return String representation of self.
+
+        EXAMPLES::
+
+            sage: from sage.crypto.smc.rabin_ids import RabinIDS
+            sage: ids = RabinIDS()
+            sage: print(ids)
+            (7,3)-Rabin information dispersal over Finite Field in a of size 2^8
+        """
+        return "({},{})-Rabin information dispersal over {}".format(self._n, self._k, 
+                                                              self._F)
+    ### begin public api
 
     def reconstruct(self, shares, decoder='lg'):
         r"""
@@ -120,8 +103,8 @@ class RabinIDS(ShamirSS):
         INPUT:
 
         - ``shares`` -- a list of shares ((x,y)-tuples of integer) or list of it.
-        - ``decoder`` -- string (default: 'lg') decoder used to reconstruct secret,
-            must be one of the supported types 'lg' or 'bw'.
+        - ``decoder`` -- (default: ``'lg'``) decoder used to reconstruct secret. Must
+            be one of the supported types ``'lg'`` or ``'bw'``.
 
         OUTPUT:
 
@@ -159,6 +142,48 @@ class RabinIDS(ShamirSS):
             # call decoder
             secret.extend([self._to_Int(i) for i in decode(points)])
         return secret
+
+
+    def share(self, secret):
+        r"""
+        Generate shares.
+
+        A polynomial of degree `k-1` is generated from input data.
+        It is then evaluated at points starting from `1`.
+
+        INPUT:
+
+        - ``secret`` -- the data to be shared as list of integer.
+
+        OUTPUT:
+
+        The shares.
+
+        EXAMPLES::
+
+            sage: from sage.crypto.smc.rabin_ids import RabinIDS
+
+            sage: n, k, order = 7, 3, 2**8
+            sage: data = [i for i in range(15)]
+            sage: ids = RabinIDS(n, k, order)
+            sage: shares = ids.share(data)
+            sage: data == ids.reconstruct(shares)
+            True
+        """
+        # check input list size (padding is not supported)
+        if len(secret)%self._k:
+            raise TypeError("input list must be multiple of k (padding is not supported).")
+        
+        # generate shares
+        shares = []
+        for i in range(len(secret)/self._k):
+            poly = 0
+            for j in range(self._k):
+                # gen polynomial form data
+                poly += self._to_GF(secret[i*self._k + j]) * self._P.gen()**j
+            # evaluate polynomial at different points (shares)
+            shares.append([(i, self._to_Int(poly(self._to_GF(i)))) for i in range(1, self._n+1)])
+        return shares
 
 
 # vim: set fileencoding=UTF-8 filetype=python :
