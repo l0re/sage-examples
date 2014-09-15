@@ -92,7 +92,7 @@ def berlekamp_welsh(deg, points):
     for n, (x, y) in enumerate(points):
         A[n] = ([x**i for i in range(deg_Q+1)]+[-y * x**i for i in range(deg_E)])
         b[n] = (y * x**deg_E)
-        QE = A.solve_right(b)
+    QE = A.solve_right(b)
 
     # reconstruct polynomial
     from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
